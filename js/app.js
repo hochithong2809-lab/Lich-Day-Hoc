@@ -135,12 +135,13 @@
   function boot() {
     document.documentElement.lang = S.lang;
     $('#app').innerHTML = '<div class="boot"><span class="mark">2h</span><p>' + t('loading') + '</p></div>';
-    api('config').then(function (c) {
+    api('bootstrap').then(function (c) {
       S.rules = c.rules;
       S.tutorName = c.tutorName || S.tutorName;
       if (c.now && Math.abs(c.now - Date.now()) > MIN) S.skew = c.now - Date.now();
-      if (!S.token) return renderLogin();
-      return api('me').then(function (r) { S.user = r.user; S.bank = r.bank; S.feesVisible = r.feesVisible !== false; enterApp(); }, function () { dropSession(); });
+      if (c.user) { S.user = c.user; S.bank = c.bank; S.feesVisible = c.feesVisible !== false; enterApp(); }
+      else if (S.token) dropSession();
+      else renderLogin();
     }, function (e) {
       $('#app').innerHTML = '<div class="boot fatal"><span class="mark">!</span><h1>' + t('fatalTitle') + '</h1><p>' + esc(errText(e)) + '</p><p class="muted">' + t('fatalHint') + '</p></div>';
     });
@@ -187,7 +188,7 @@
   }
 
   function enterApp() {
-    S.data = {}; S.payMode = false; S.dayIdx = null;
+    S.data = {}; S.payMode = false; S.dayIdx = null; S.prefetched = false;
     S.weekStart = sundayOf(now());
     S.tab = isAdmin() ? 'calendar' : 'book';
     loadTab();
@@ -224,10 +225,23 @@
     return Promise.all(jobs).then(function () {
       if (tab !== S.tab) return;
       S.loading = false; renderApp();
+      prefetch();
     }, function (e) {
       S.loading = false;
       if (e.code !== 'unauthorized') { renderApp(); toast(errText(e), 'bad'); }
     });
+  }
+
+  /** After the first screen is ready, quietly load the student's other tabs so switching is instant. */
+  function prefetch() {
+    if (S.prefetched || isAdmin()) return;
+    S.prefetched = true;
+    var before = S.feesVisible;
+    if (!S.data.bookings) api('bookings').then(function (r) {
+      S.data.bookings = r.bookings; S.feesVisible = r.feesVisible !== false;
+      if (S.feesVisible !== before && $('#modal-root').hidden) renderApp();
+      if (S.feesVisible && !S.data.billing) api('billing').then(function (b) { if (!b.hidden) S.data.billing = b; }, function () {});
+    }, function () {});
   }
 
   // ---------------- shell ----------------
