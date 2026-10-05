@@ -6,7 +6,7 @@
  * Leave it empty to run the site in demo mode with sample data.
  */
 window.APP_CONFIG = {
-  API_URL: 'https://script.google.com/macros/s/AKfycbzXkwMw687HY1z5KSsfkzM15_xq0k6RRgTB2TSfAipmcDPpjJ1WZbAlkexQpu_zaXFt/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycbw159p6hdS5UpGImtTbKh6VKq-K9oq6myUDJUyhapCMrlD35LvNkZhR8KYU_a4bbnOY/exec',
   TUTOR_NAME: 'Hồ Chí Thông',   // shown before the backend answers
   DEFAULT_LANG: 'vi'          // 'vi' or 'en'
 };
