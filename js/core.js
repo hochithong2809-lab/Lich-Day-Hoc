@@ -356,6 +356,17 @@ var TutorCore = (function () {
     if (action === 'ping') return { pong: true, now: ctx.now };
     if (action === 'config') return { rules: ctx.rules, tutorName: ctx.tutorName, now: ctx.now };
     if (action === 'login') return login(p, ctx);
+    if (action === 'bootstrap') {
+      // Settings + the signed-in user in one round trip. Without a token the data sheet is never opened.
+      var out = { rules: ctx.rules, tutorName: ctx.tutorName, now: ctx.now, user: null };
+      if (p.token) {
+        try {
+          var who = requireUser(p.token, ctx);
+          out.user = publicUser(who); out.bank = ctx.bank || null; out.feesVisible = feesVisible(who, ctx);
+        } catch (e) { /* expired session: the page shows the login form */ }
+      }
+      return out;
+    }
 
     var me = requireUser(p.token, ctx);
     var admin = me.role === 'admin';
